@@ -1,5 +1,6 @@
 .glyphicon{
     font-size: 1.7em;
+    color: #cdcdcd;
 }
 
 .wrong{
@@ -10,3 +11,6 @@
     color: blue;
 }
 
+.capitalize{
+    text-transform: uppercase;
+}

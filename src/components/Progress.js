@@ -4,9 +4,16 @@ var React = require('react');
 
 var Progress = React.createClass({
     render: function () {
+        var cls = "alert alert-info";
+        if(this.props.msgType === 'failure'){
+            cls = "alert alert-danger lead";
+        } else if(this.props.msgType === 'success'){
+            cls = "alert alert-success lead";
+        }
+        
         return (
-            <div className="col-lg-4">
-                <div className="alert alert-info">Chances Left</div>
+            <div>
+                <div className={cls}>{this.props.message}</div> 
             </div>
         );
     }

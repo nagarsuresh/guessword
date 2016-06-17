@@ -29032,20 +29032,30 @@ var ChooseWord = React.createClass({displayName: "ChooseWord",
         this.props.guessWord(this.refs.theWord.getDOMNode().value);
     },
 
+    onWordBeingEntered: function (event) {
+        this.props.onWordEnter(event.target.value);
+    },
+
     render: function () {
+        var error = React.createElement("div", null);
+        if (this.props.invaildWordError) {
+            error = React.createElement("div", {className: "alert alert-danger "}, this.props.invaildWordError);
+        }
+        var canGuess = (this.props.selectedWord) ? false : true;
         return (
             React.createElement("div", {className: "container"}, 
                 React.createElement("div", {className: "row"}, 
-                    React.createElement("div", {className: "col-lg-8"}, 
+                    React.createElement("div", {className: "col-lg-8 col-md-8 col-sm-8 col-xs-12"}, 
                         React.createElement("div", {className: "input-group"}, 
-                            React.createElement("input", {type: "text", className: "form-control", ref: "theWord"}), 
+                            React.createElement("input", {type: "text", className: "form-control capitalize", ref: "theWord", maxLength: "4", value: this.props.guessedWord, onChange: this.onWordBeingEntered}), 
                             React.createElement("span", {className: "input-group-btn"}, 
-                                React.createElement("button", {className: "btn btn-primary", type: "button", onClick: this.guessWord}, "Go!")
+                                React.createElement("button", {className: "btn btn-primary", type: "button", onClick: this.guessWord, disabled: canGuess}, "Go!")
                             )
-                        )
+                        ), 
+                        error
                     ), 
-                    React.createElement("div", {className: "col-lg-4"}, 
-                        React.createElement("div", {className: "well"}, "Word is selected!")
+                    React.createElement("div", {className: "col-lg-4 col-md-4 col-sm-4"}, 
+                        React.createElement("div", {className: "well"}, this.props.selectedWord ? 'Start Guessing!' : 'click START button to play!')
                     )
                 )
             )
@@ -29062,10 +29072,23 @@ var React = require('react');
 
 var ResultRow = React.createClass({displayName: "ResultRow",
     render: function () {
+        var word = this.props.word.word;
+        var stars = this.props.word.stars;
+        var displayStars = [];
+        for (var i = 0; i < stars.blue; i++) {
+            displayStars.push(React.createElement("span", {className: "glyphicon glyphicon-star right"}));
+        }
+        for (i = 0; i < stars.red; i++) {
+            displayStars.push(React.createElement("span", {className: "glyphicon glyphicon-star wrong"}));
+        }
+        for (i = 0; i < stars.gray; i++) {
+            displayStars.push(React.createElement("span", {className: "glyphicon glyphicon-star"}));
+        }
+
         return (
-            React.createElement("div", {className: "list-group-item"}, this.props.word, 
+            React.createElement("div", {className: "list-group-item"}, word, 
                 React.createElement("span", {className: "pull-right"}, 
-                    React.createElement("span", {className: "glyphicon glyphicon-star right"})
+                    displayStars
                 )
             )
         );
@@ -29080,10 +29103,8 @@ var DisplayResult = React.createClass({displayName: "DisplayResult",
             rows.push(React.createElement(ResultRow, {word: word}));
         });
         return (
-            React.createElement("div", {className: "col-lg-8"}, 
-                React.createElement("div", {className: "list-group"}, 
-                    rows
-                )
+            React.createElement("div", {className: "list-group"}, 
+                rows
             )
         );
     }
@@ -29100,42 +29121,199 @@ var Header = require('./Header');
 var DisplayResult = require('./DisplayResult');
 var Progress = require('./Progress');
 var ChooseWord = require('./ChooseWord');
+var HowToPlay = require('./HowToPlay');
 
 var Game = React.createClass({displayName: "Game",
 
     getInitialState: function () {
+        var MAX_ATTEMPTS = 15;
         return {
             selectedWord: null,
-            guessedWords: ['one', 'two'],
-            maxAttempts: 15
+            guessedWords: [],
+            maxAttempts: MAX_ATTEMPTS,
+            guessedWord: null,
+            invaildWordError: null,
+            message: "Not Started!",
+            howToPlay: false,
+            msgType: 'info',
         };
     },
 
 
     onStartGame: function (event) {
+        var randomIndex, randomWord;
         event.preventDefault();
+
+        randomIndex = Math.round(Math.random() * DICTIONARY_WORDS.length);
+        randomWord = DICTIONARY_WORDS[randomIndex];
+
         this.setState({
-            guessedWords: []
+            guessedWords: [],
+            selectedWord: randomWord,
+            givenUp: false,
+            message: this.state.maxAttempts + " Attempts left",
+            msgType: 'info'
         });
+
     },
 
     onWordGuess: function (word) {
-        var words = this.state.guessedWords;
-        words.push(word);
+        var me = this;
+        var i = 0;
+
+        if (!word || word === '') {
+            this.setState({
+                invaildWordError: 'Enter a word to guess!'
+            });
+            return;
+        }
+        word = word.toUpperCase();
+        for (i = 0; i < this.state.guessedWords.length; i++) {
+            if (this.state.guessedWords[i].word === word) {
+                this.setState({
+                    invaildWordError: word + ' is already guessed!',
+                    guessedWord: word
+                });
+                return;
+            }
+        }
+
         this.setState({
-            guessedWords: words
+            invaildWordError: '',
+            guessedWord: word
+        }, function () {
+            if (!DICTIONARY_WORDS.includes(word)) {
+                me.setState({
+                    invaildWordError: word + ' is an invalid dictionary word!',
+                    guessedWord: word
+                });
+                return;
+            }
+
+            me.matchWord(word);
+        });
+    },
+
+    matchWord: function (word) {
+        var words = this.state.guessedWords;
+        var index = 0;
+
+        var selectedWord = this.state.selectedWord.split("");
+        var toMatch = word.split("");
+        var blue = 0, red = 0, gray = 0;
+        for (var i = 0; i < 4; i++) {
+            if (toMatch[i] === selectedWord[i]) {
+                blue += 1;
+                toMatch[i] = null;
+            }
+        }
+
+        for (i = 0; i < 4; i++) {
+            if (toMatch[i] != null && toMatch.includes(selectedWord[i])) {
+                red += 1;
+                index = toMatch.indexOf(selectedWord[i]);
+                toMatch[i] = null;
+            }
+        }
+
+        gray = 4 - (blue + red);
+
+        words.push({
+            word: word,
+            stars: {
+                red: red,
+                blue: blue,
+                gray: gray
+            }
+        });
+
+        //won it
+
+        if (blue === 4) {
+            this.setState({
+                message: 'You won it!!! Click start to Play again!',
+                selectedWord: null,
+                msgType: 'success'
+            });
+        } else {
+            var attempsLeft = this.state.maxAttempts - this.state.guessedWords.length;
+
+            if (attempsLeft === 0) {
+                this.setState({
+                    message: 'You could not guess ' + this.state.selectedWord,
+                    selectedWord: null,
+                    guessedWord: null,
+                    msgType: 'failure'
+                });
+            } else {
+                var message = attempsLeft + " Attempts left";
+                this.setState({
+                    guessedWords: words,
+                    guessedWord: '',
+                    message: message
+                });
+            }
+        }
+
+
+    },
+
+    onWordEnter: function (word) {
+        if (word) {
+            word = word.toUpperCase();
+        }
+        this.setState({
+            guessedWord: word
+        });
+    },
+
+    onGiveUp: function () {
+        this.setState({
+            message: 'You could not guess ' + this.state.selectedWord,
+            selectedWord: null,
+            msgType: 'failure'
+        });
+    },
+
+    onHowToPlay: function () {
+        this.setState({
+            howToPlay: !this.state.howToPlay
         });
     },
 
 
     render: function () {
+        var help = null;
+        if (this.state.howToPlay) {
+            help = React.createElement(HowToPlay, null);
+        }
         return (
             React.createElement("div", {className: ""}, 
-                React.createElement(Header, {startGame: this.onStartGame}), 
-                React.createElement(ChooseWord, {guessWord: this.onWordGuess}), 
+
+                React.createElement(Header, {
+                    startGame: this.onStartGame, 
+                    selectedWord: this.state.selectedWord, 
+                    onGiveUp: this.onGiveUp, 
+                    onHowToPlay: this.onHowToPlay}
+                    ), 
+
+                React.createElement(ChooseWord, {
+                    guessWord: this.onWordGuess, 
+                    selectedWord: this.state.selectedWord, 
+                    invaildWordError: this.state.invaildWordError, 
+                    guessedWord: this.state.guessedWord, 
+                    onWordEnter: this.onWordEnter}), 
+
                 React.createElement("div", {className: "container"}, 
-                    React.createElement(DisplayResult, {guessedWords: this.state.guessedWords}), 
-                    React.createElement(Progress, null)
+                    React.createElement("div", {className: "row"}, 
+                        React.createElement("div", {className: "col-lg-8 col-md-8 col-sm-8 col-xs-12"}, 
+                            React.createElement(DisplayResult, {guessedWords: this.state.guessedWords})
+                        ), 
+                        React.createElement("div", {className: "col-lg-4 col-md-4 col-sm-4"}, 
+                            React.createElement(Progress, {message: this.state.message, msgType: this.state.msgType}), 
+                            help
+                        )
+                    )
                 )
 
             )
@@ -29144,23 +29322,25 @@ var Game = React.createClass({displayName: "Game",
 });
 
 module.exports = Game;
-},{"./ChooseWord":158,"./DisplayResult":159,"./Header":161,"./Progress":162,"react":157}],161:[function(require,module,exports){
+},{"./ChooseWord":158,"./DisplayResult":159,"./Header":161,"./HowToPlay":162,"./Progress":163,"react":157}],161:[function(require,module,exports){
 "use strict";
 
 var React = require('react');
 
 var Header = React.createClass({displayName: "Header",
     render: function () {
+        var hasWord = (this.props.selectedWord) ? true : false;
         return (
             React.createElement("nav", {className: "navbar navbar-inverse"}, 
                 React.createElement("div", {className: "container-fluid"}, 
                     React.createElement("div", {className: "navbar-header"}, 
-                        React.createElement("a", {className: "navbar-brand", href: "#"}, "Brand")
+                        React.createElement("a", {className: "navbar-brand", href: "#"}, "Word Guess Game")
                     ), 
                     React.createElement("div", {className: "nav navbar-nav navbar-right"}, 
                         React.createElement("div", {className: "btn-toolbar"}, 
-                            React.createElement("button", {className: "btn btn-primary btn-lg", onClick: this.props.startGame}, "Start"), 
-                            React.createElement("button", {className: "btn btn-danger btn-lg"}, "Give Up")
+                            React.createElement("button", {className: "btn btn-primary btn-lg", onClick: this.props.startGame, disabled: hasWord}, "Start"), 
+                            React.createElement("button", {className: "btn btn-danger btn-lg", onClick: this.props.onGiveUp, disabled: !hasWord}, "Give Up!"), 
+                            React.createElement("button", {className: "btn btn-info btn-lg", onClick: this.props.onHowToPlay}, "How to play")
                         )
                     )
                 )
@@ -29176,11 +29356,48 @@ module.exports = Header;
 
 var React = require('react');
 
-var Progress = React.createClass({displayName: "Progress",
+var HowToPlay = React.createClass({displayName: "HowToPlay",
     render: function () {
         return (
-            React.createElement("div", {className: "col-lg-4"}, 
-                React.createElement("div", {className: "alert alert-info"}, "Chances Left")
+            React.createElement("div", null, 
+                React.createElement("div", {className: "well"}, 
+                    React.createElement("p", {className: "lead"}, 
+                        "Guess a valid dictionary word chosen randomly by system in 15 attempts."
+                    ), 
+                    "System choses a 4 letter word randomly, the word will be a valid dictionary word.", React.createElement("br", null), 
+                    "You need to guess the word which system has selected.", React.createElement("br", null), 
+                    "If any of the letter of the word which you guess is there in the word selected by system and is at right location too, system displays a \"blue\" star," + ' ' +
+                    "if letter is there but is at wrong location, system displays a \"red\" star. ", React.createElement("br", null), 
+                    "e.g. system selected word - \"SEAT\" and user enters \"TEST\" system will dislay two Blue(E and T) and one red star (S). ", React.createElement("br", null), 
+                    React.createElement("br", null), 
+                    React.createElement("strong", null, "Note "), ": The order of stars is not related to order of letters in the word!", 
+                    React.createElement("br", null), React.createElement("br", null), 
+                    React.createElement("span", {className: "label label-default"}, "press 'how to play' again to hide this message ")
+                )
+            )
+        );
+    }
+});
+
+module.exports = HowToPlay;
+
+},{"react":157}],163:[function(require,module,exports){
+"use strict";
+
+var React = require('react');
+
+var Progress = React.createClass({displayName: "Progress",
+    render: function () {
+        var cls = "alert alert-info";
+        if(this.props.msgType === 'failure'){
+            cls = "alert alert-danger lead";
+        } else if(this.props.msgType === 'success'){
+            cls = "alert alert-success lead";
+        }
+        
+        return (
+            React.createElement("div", null, 
+                React.createElement("div", {className: cls}, this.props.message)
             )
         );
     }
@@ -29188,7 +29405,7 @@ var Progress = React.createClass({displayName: "Progress",
 
 module.exports = Progress;
 
-},{"react":157}],163:[function(require,module,exports){
+},{"react":157}],164:[function(require,module,exports){
  $ = jQuery = require('jquery');
 // "use strict";
 
@@ -29197,4 +29414,4 @@ var React = require('react');
 var Game = require('./components/Game');
 
 React.render(React.createElement(Game, null), document.getElementById("app"));
-},{"./components/Game":160,"jquery":2,"react":157}]},{},[163]);
+},{"./components/Game":160,"jquery":2,"react":157}]},{},[164]);
