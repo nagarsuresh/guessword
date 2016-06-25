@@ -29168,6 +29168,15 @@ var Game = React.createClass({displayName: "Game",
             return;
         }
         word = word.toUpperCase();
+
+        if (word.length > 4) {
+            this.setState({
+                invaildWordError: word + ' not a 4 character word!',
+                guessedWord: word
+            });
+            return;
+        }
+
         for (i = 0; i < this.state.guessedWords.length; i++) {
             if (this.state.guessedWords[i].word === word) {
                 this.setState({
@@ -29281,6 +29290,10 @@ var Game = React.createClass({displayName: "Game",
         });
     },
 
+    onFeedback: function () {
+        window.location.href = "mailto:nagar.suresh@gmail.com";
+    },
+
 
     render: function () {
         var help = null;
@@ -29294,7 +29307,8 @@ var Game = React.createClass({displayName: "Game",
                     startGame: this.onStartGame, 
                     selectedWord: this.state.selectedWord, 
                     onGiveUp: this.onGiveUp, 
-                    onHowToPlay: this.onHowToPlay}
+                    onHowToPlay: this.onHowToPlay, 
+                    onFeedback: this.onFeedback}
                     ), 
 
                 React.createElement(ChooseWord, {
@@ -29340,7 +29354,8 @@ var Header = React.createClass({displayName: "Header",
                         React.createElement("div", {className: "btn-toolbar"}, 
                             React.createElement("button", {className: "btn btn-primary btn-lg", onClick: this.props.startGame, disabled: hasWord}, "Start"), 
                             React.createElement("button", {className: "btn btn-danger btn-lg", onClick: this.props.onGiveUp, disabled: !hasWord}, "Give Up!"), 
-                            React.createElement("button", {className: "btn btn-info btn-lg", onClick: this.props.onHowToPlay}, "How to play")
+                            React.createElement("button", {className: "btn btn-info btn-lg", onClick: this.props.onHowToPlay}, "How to play"), 
+                            React.createElement("button", {className: "btn btn-default btn-lg", onClick: this.props.onFeedback}, "Feedback")
                         )
                     )
                 )

@@ -16,6 +16,7 @@ var Header = React.createClass({
                             <button className="btn btn-primary btn-lg" onClick={this.props.startGame} disabled={hasWord}>Start</button>
                             <button className="btn btn-danger btn-lg" onClick={this.props.onGiveUp} disabled={!hasWord}>Give Up!</button>
                             <button className="btn btn-info btn-lg" onClick={this.props.onHowToPlay}>How to play</button>
+                            <button className="btn btn-default btn-lg" onClick={this.props.onFeedback}>Feedback</button>
                         </div>
                     </div>
                 </div>

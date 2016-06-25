@@ -52,6 +52,15 @@ var Game = React.createClass({
             return;
         }
         word = word.toUpperCase();
+
+        if (word.length > 4) {
+            this.setState({
+                invaildWordError: word + ' not a 4 character word!',
+                guessedWord: word
+            });
+            return;
+        }
+
         for (i = 0; i < this.state.guessedWords.length; i++) {
             if (this.state.guessedWords[i].word === word) {
                 this.setState({
@@ -165,6 +174,10 @@ var Game = React.createClass({
         });
     },
 
+    onFeedback: function () {
+        window.location.href = "mailto:nagar.suresh@gmail.com";
+    },
+
 
     render: function () {
         var help = null;
@@ -179,6 +192,7 @@ var Game = React.createClass({
                     selectedWord={this.state.selectedWord}
                     onGiveUp={this.onGiveUp}
                     onHowToPlay={this.onHowToPlay}
+                    onFeedback={this.onFeedback}
                     />
 
                 <ChooseWord
