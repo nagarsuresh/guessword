@@ -29309,7 +29309,7 @@ var Game = React.createClass({displayName: "Game",
                         React.createElement("div", {className: "col-lg-8 col-md-8 col-sm-8 col-xs-12"}, 
                             React.createElement(DisplayResult, {guessedWords: this.state.guessedWords})
                         ), 
-                        React.createElement("div", {className: "col-lg-4 col-md-4 col-sm-4"}, 
+                        React.createElement("div", {className: "col-lg-4 col-md-4 col-sm-4 col-xs-12"}, 
                             React.createElement(Progress, {message: this.state.message, msgType: this.state.msgType}), 
                             help
                         )
