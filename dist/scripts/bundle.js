@@ -29336,6 +29336,7 @@ var Game = React.createClass({displayName: "Game",
 });
 
 module.exports = Game;
+
 },{"./ChooseWord":158,"./DisplayResult":159,"./Header":161,"./HowToPlay":162,"./Progress":163,"react":157}],161:[function(require,module,exports){
 "use strict";
 
@@ -29429,4 +29430,5 @@ var React = require('react');
 var Game = require('./components/Game');
 
 React.render(React.createElement(Game, null), document.getElementById("app"));
+
 },{"./components/Game":160,"jquery":2,"react":157}]},{},[164]);
